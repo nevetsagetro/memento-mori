@@ -1,1 +1,22 @@
-body { margin: 0; background-color: #000; color: #fff; }
+/* src/index.css */
+:root {
+  background-color: #000000;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000000;
+  color: #ffffff;
+  /* Forzamos que la fuente sea mono en toda la app */
+  font-family: 'Courier New', Courier, monospace;
+  overflow-x: hidden;
+}
+
+/* Mejora el aspecto de los selectores en móviles */
+select {
+  border-radius: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}

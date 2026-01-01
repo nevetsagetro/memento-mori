@@ -119,7 +119,18 @@ const MementoMori = () => {
   const quarters = [weeks.slice(0, 13), weeks.slice(13, 26), weeks.slice(26, 39), weeks.slice(39, 52)];
 
   return (
-    <div style={{ backgroundColor: '#000', color: '#FFF', minHeight: '100vh', fontFamily: 'monospace', padding: '32px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div style={{ 
+    backgroundColor: '#000000', 
+    color: '#FFFFFF', 
+    minHeight: '100vh',
+    width: '100%', // Asegura que ocupe todo el ancho
+    fontFamily: "'Courier New', Courier, monospace",
+    padding: '48px 16px', // Un poco más de aire arriba
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    boxSizing: 'border-box' // Importante para que el padding no rompa el ancho
+  }}>
       
       {/* Progress Bars */}
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '1px', backgroundColor: '#000', zIndex: 1000 }}>
