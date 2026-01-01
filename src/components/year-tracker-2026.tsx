@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 
 const MementoMori = () => {
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [birthYear, setBirthYear] = useState(1990);
-  const [lifeExpectancy, setLifeExpectancy] = useState(80);
+  const [birthYear, setBirthYear] = useState(1997);
+  const [lifeExpectancy, setLifeExpectancy] = useState(76);
   const [virtueMarked, setVirtueMarked] = useState(false);
   const [lastVirtueDate, setLastVirtueDate] = useState<string | null>(null);
   const [cosmicView, setCosmicView] = useState(false);
