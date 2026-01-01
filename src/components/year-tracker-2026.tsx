@@ -426,17 +426,25 @@ const MementoMori = () => {
         ) : (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '8px', color: '#444444', letterSpacing: '2px', marginBottom: '24px' }}>THE VIEW FROM ABOVE — ONE CENTURY</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(52, 1fr)', gap: '2px', marginBottom: '24px' }}>
+             {/* GRID OPTIMIZADO: Eliminamos anchos fijos para evitar el salto de píxel */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(52, 1fr)', // 52 columnas iguales
+              gap: '1px', // Gap pequeño y constante
+              marginBottom: '24px', 
+              width: '100%'  // Ocupa todo el ancho del contenedor padre
+              }}>
               {lifeScaleData.weeks.map((weekIndex) => {
                 const isPassed = weekIndex < lifeScaleData.currentWeekInLife;
                 const isCurrent = weekIndex === lifeScaleData.currentWeekInLife;
                 return (
                   <div key={weekIndex} style={{ 
-                    width: '6px', 
-                    height: '6px', 
+                    width: '100%', // Se adapta al 1fr del grid
+                    aspectRatio: '1/1', // Fuerza a que sea un cuadrado perfecto
                     backgroundColor: isPassed ? '#FFFFFF' : '#222222', 
                     opacity: isPassed ? 0.5 : 0.2,
-                    border: isCurrent ? '1px solid #FFFFFF' : 'none'
+                    border: isCurrent ? '1px solid #FFFFFF' : 'none',
+                    boxSizing: 'border-box'          // Asegura que el borde no sume tamaño extra
                   }}></div>
                 );
               })}
