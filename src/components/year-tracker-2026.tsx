@@ -8,7 +8,6 @@ const MementoMori = () => {
   const [virtueMarked, setVirtueMarked] = useState(false);
   const [lastVirtueDate, setLastVirtueDate] = useState<string | null>(null);
   const [cosmicView, setCosmicView] = useState(false);
-  const [lifeScale] = useState(80); // Quitamos setLifeScale si no se usa
   const animationFrameRef = useRef<number | null>(null);
 
   // Generate 52 weeks for any year
