@@ -14,11 +14,9 @@ const MementoMori = () => {
   // Generate 52 weeks for any year
   const generateWeeks = (year: number) => {
     const weeks = [];
-    
     for (let week = 1; week <= 52; week++) {
       const startDate = new Date(year, 0, 1 + (week - 1) * 7);
       const endDate = new Date(year, 0, 1 + week * 7 - 1);
-      
       weeks.push({
         weekNumber: week,
         startDate: startDate.toISOString().split('T')[0],
@@ -26,34 +24,22 @@ const MementoMori = () => {
         quarter: Math.ceil(week / 13)
       });
     }
-    
     return weeks;
   };
 
   const weeks = generateWeeks(selectedYear);
 
-  // High-precision countdown using requestAnimationFrame
   useEffect(() => {
     const updateTime = () => {
       setCurrentTime(new Date());
       animationFrameRef.current = requestAnimationFrame(updateTime);
     };
-    
     animationFrameRef.current = requestAnimationFrame(updateTime);
-    
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, []);
 
-  // Toggle cosmic view function
-  const toggleCosmicView = () => {
-    setCosmicView(prev => !prev);
-  };
-
-  // Check if virtue mark has expired (new day)
   useEffect(() => {
     const today = new Date().toDateString();
     if (lastVirtueDate && lastVirtueDate !== today) {
@@ -62,7 +48,6 @@ const MementoMori = () => {
     }
   }, [currentTime, lastVirtueDate]);
 
-  // Handle virtue mark click
   const handleVirtueClick = () => {
     const today = new Date().toDateString();
     if (!virtueMarked || lastVirtueDate !== today) {
@@ -71,362 +56,140 @@ const MementoMori = () => {
     }
   };
 
-  // Calculate countdown to end of selected year
   const calculateCountdown = () => {
     const target = new Date(`${selectedYear}-12-31T23:59:59.999`);
     const diff = target.getTime() - currentTime.getTime();
-    
-    if (diff <= 0) {
-      return { days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 0 };
-    }
-    
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    const milliseconds = diff % 1000;
-    
-    return { days, hours, minutes, seconds, milliseconds };
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 0 };
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+      minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+      seconds: Math.floor((diff % (1000 * 60)) / 1000),
+      milliseconds: diff % 1000
+    };
   };
 
   const countdown = calculateCountdown();
 
-  // Calculate Year Depletion Percentage
   const calculateYearDepletion = () => {
     const startOfYear = new Date(`${selectedYear}-01-01T00:00:00.000`);
     const endOfYear = new Date(`${selectedYear}-12-31T23:59:59.999`);
-    const totalYearMs = endOfYear.getTime() - startOfYear.getTime();
+    const totalMs = endOfYear.getTime() - startOfYear.getTime();
     const elapsedMs = currentTime.getTime() - startOfYear.getTime();
-    
-    if (elapsedMs <= 0) return 0;
-    if (elapsedMs >= totalYearMs) return 100;
-    
-    return (elapsedMs / totalYearMs) * 100;
+    return Math.min(Math.max((elapsedMs / totalMs) * 100, 0), 100);
   };
 
   const yearDepletion = calculateYearDepletion();
 
-  // Calculate Life Depletion Percentage
   const calculateLifeDepletion = () => {
     const birthDate = new Date(`${birthYear}-01-01T00:00:00.000`);
-    const expectedDeathDate = new Date(`${birthYear + lifeExpectancy}-01-01T00:00:00.000`);
-    const totalLifeMs = expectedDeathDate.getTime() - birthDate.getTime();
+    const deathDate = new Date(`${birthYear + lifeExpectancy}-01-01T00:00:00.000`);
+    const totalMs = deathDate.getTime() - birthDate.getTime();
     const elapsedMs = currentTime.getTime() - birthDate.getTime();
-    
-    if (elapsedMs <= 0) return 0;
-    if (elapsedMs >= totalLifeMs) return 100;
-    
-    return (elapsedMs / totalLifeMs) * 100;
+    return Math.min(Math.max((elapsedMs / totalMs) * 100, 0), 100);
   };
 
   const lifeDepletion = calculateLifeDepletion();
-
-  // Calculate current 10-minute block of the day (0-143)
-  const getCurrentDayBlock = () => {
-    const hours = currentTime.getHours();
-    const minutes = currentTime.getMinutes();
-    const totalMinutes = hours * 60 + minutes;
-    return Math.floor(totalMinutes / 10);
-  };
-
-  const currentDayBlock = getCurrentDayBlock();
-
-  // Generate array of 144 blocks (24 hours * 6 blocks per hour)
+  const currentDayBlock = Math.floor((currentTime.getHours() * 60 + currentTime.getMinutes()) / 10);
   const dayBlocks = Array.from({ length: 144 }, (_, i) => i);
+  const isWeekCompleted = (endDateStr: string) => currentTime > new Date(endDateStr + 'T23:59:59');
 
-  // Determine if a week is completed
-  const isWeekCompleted = (weekEndDate: string) => {
-    const endDate = new Date(weekEndDate + 'T23:59:59');
-    return currentTime > endDate;
-  };
-
-  // Get current week number for selected year
   const getCurrentWeekNumber = () => {
-    const startOfYear = new Date(`${selectedYear}-01-01`);
-    const endOfYear = new Date(`${selectedYear}-12-31T23:59:59`);
-    
-    if (currentTime < startOfYear || currentTime > endOfYear) {
-      return null;
-    }
-    
-    const diffTime = currentTime.getTime() - startOfYear.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    return Math.floor(diffDays / 7) + 1;
+    const start = new Date(`${selectedYear}-01-01`);
+    if (currentTime < start || currentTime > new Date(`${selectedYear}-12-31T23:59:59`)) return null;
+    return Math.floor((currentTime.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7)) + 1;
   };
 
   const currentWeek = getCurrentWeekNumber();
-
-  // Format number with leading zeros - tabular figures
-  const pad = (num: number | string, size: number) => String(num).padStart(size, '0');
-
-  // Generate year options (2026-2040)
+  const pad = (num: number, size: number) => String(num).padStart(size, '0');
   const yearOptions = Array.from({ length: 15 }, (_, i) => 2026 + i);
-
-  // Generate birth year options (1920-2020)
   const birthYearOptions = Array.from({ length: 101 }, (_, i) => 1920 + i);
-
-  // Generate life expectancy options (50-120)
   const lifeExpectancyOptions = Array.from({ length: 71 }, (_, i) => 50 + i);
 
-  // Generate life-scale grid (weeks across entire lifespan)
   const generateLifeScaleWeeks = () => {
-    const totalWeeks = 100 * 52; // Always show 100 years
-    const currentYearInCentury = new Date().getFullYear();
-    const currentAge = currentYearInCentury - birthYear;
-    const currentWeekInLife = Math.floor((currentAge * 365.25 + 
-      (currentTime.getMonth() * 30.44) + 
-      currentTime.getDate()) / 7);
-    
-    const lifeScaleWeeks = lifeScale * 52; // Weeks in selected life scale
-    
+    const totalWeeks = 100 * 52;
+    const currentAgeWeeks = Math.floor(((new Date().getFullYear() - birthYear) * 365.25 + (currentTime.getMonth() * 30.44) + currentTime.getDate()) / 7);
     return {
       totalWeeks,
-      currentWeekInLife,
-      lifeScaleWeeks,
+      currentWeekInLife: currentAgeWeeks,
       weeks: Array.from({ length: totalWeeks }, (_, i) => i)
     };
   };
 
   const lifeScaleData = generateLifeScaleWeeks();
-
-  // Group weeks by quarter
-  const quarters = [
-    weeks.slice(0, 13),
-    weeks.slice(13, 26),
-    weeks.slice(26, 39),
-    weeks.slice(39, 52)
-  ];
+  const quarters = [weeks.slice(0, 13), weeks.slice(13, 26), weeks.slice(26, 39), weeks.slice(39, 52)];
 
   return (
-    <div style={{ 
-      backgroundColor: '#000000', 
-      color: '#FFFFFF', 
-      minHeight: '100vh',
-      fontFamily: "'Courier New', Courier, monospace",
-      padding: '32px 16px',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      position: 'relative'
-    }}>
+    <div style={{ backgroundColor: '#000', color: '#FFF', minHeight: '100vh', fontFamily: 'monospace', padding: '32px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       
-      {/* Horizon Line - Year Depletion Progress Bar */}
-      <div style={{
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        width: '100%',
-        height: '1px',
-        backgroundColor: '#000000',
-        zIndex: '999'
-      }}>
-        <div style={{
-          width: `${yearDepletion}%`,
-          height: '1px',
-          backgroundColor: '#FFFFFF',
-          transition: 'none'
-        }}></div>
+      {/* Progress Bars */}
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '1px', backgroundColor: '#000', zIndex: 1000 }}>
+        <div style={{ width: `${yearDepletion}%`, height: '1px', backgroundColor: '#FFF' }}></div>
+      </div>
+      <div style={{ position: 'fixed', top: '2px', left: 0, width: '100%', height: '1px', backgroundColor: '#000', zIndex: 999 }}>
+        <div style={{ width: `${lifeDepletion}%`, height: '1px', backgroundColor: '#666' }}></div>
       </div>
 
-      {/* Life Depletion Progress Bar - Second Horizon Line */}
-      <div style={{
-        position: 'fixed',
-        top: '2px',
-        left: '0',
-        width: '100%',
-        height: '1px',
-        backgroundColor: '#000000',
-        zIndex: '998'
-      }}>
-        <div style={{
-          width: `${lifeDepletion}%`,
-          height: '1px',
-          backgroundColor: '#666666',
-          transition: 'none'
-        }}></div>
-      </div>
-
-      {/* Configuration Section */}
-      <div style={{ 
-        marginBottom: '48px', 
-        width: '100%', 
-        maxWidth: '400px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px'
-      }}>
-        <select
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(Number(e.target.value))}
-          style={{
-            backgroundColor: '#000000',
-            color: '#FFFFFF',
-            border: '1px solid #FFFFFF',
-            padding: '12px',
-            fontSize: '18px',
-            fontFamily: "'Courier New', Courier, monospace",
-            fontWeight: 'normal',
-            textAlign: 'center',
-            outline: 'none',
-            appearance: 'none'
-          }}
-        >
-          {yearOptions.map(year => (
-            <option key={year} value={year}>{year}</option>
-          ))}
+      {/* Selectors */}
+      <div style={{ marginBottom: '48px', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} style={{ backgroundColor: '#000', color: '#FFF', border: '1px solid #FFF', padding: '12px', fontSize: '18px', appearance: 'none' }}>
+          {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
-
         <div style={{ display: 'flex', gap: '8px' }}>
-          <select
-            value={birthYear}
-            onChange={(e) => setBirthYear(Number(e.target.value))}
-            style={{
-              backgroundColor: '#000000',
-              color: '#FFFFFF',
-              border: '1px solid #444444',
-              padding: '10px',
-              fontSize: '14px',
-              fontFamily: "'Courier New', Courier, monospace",
-              fontWeight: 'normal',
-              textAlign: 'center',
-              outline: 'none',
-              appearance: 'none',
-              flex: '1'
-            }}
-          >
-            {birthYearOptions.map(year => (
-              <option key={year} value={year}>Born: {year}</option>
-            ))}
+          <select value={birthYear} onChange={(e) => setBirthYear(Number(e.target.value))} style={{ backgroundColor: '#000', color: '#FFF', border: '1px solid #444', padding: '10px', flex: 1, appearance: 'none' }}>
+            {birthYearOptions.map(y => <option key={y} value={y}>Born: {y}</option>)}
           </select>
-
-          <select
-            value={lifeExpectancy}
-            onChange={(e) => setLifeExpectancy(Number(e.target.value))}
-            style={{
-              backgroundColor: '#000000',
-              color: '#FFFFFF',
-              border: '1px solid #444444',
-              padding: '10px',
-              fontSize: '14px',
-              fontFamily: "'Courier New', Courier, monospace",
-              fontWeight: 'normal',
-              textAlign: 'center',
-              outline: 'none',
-              appearance: 'none',
-              flex: '1'
-            }}
-          >
-            {lifeExpectancyOptions.map(age => (
-              <option key={age} value={age}>Life: {age}y</option>
-            ))}
+          <select value={lifeExpectancy} onChange={(e) => setLifeExpectancy(Number(e.target.value))} style={{ backgroundColor: '#000', color: '#FFF', border: '1px solid #444', padding: '10px', flex: 1, appearance: 'none' }}>
+            {lifeExpectancyOptions.map(a => <option key={a} value={a}>Life: {a}y</option>)}
           </select>
         </div>
       </div>
 
-      {/* High-Precision Countdown */}
-      <div style={{ 
-        textAlign: 'center', 
-        marginBottom: '80px',
-        width: '100%',
-        maxWidth: '400px'
-      }}>
-        <div style={{ fontSize: '72px', lineHeight: '1', marginBottom: '24px', fontVariantNumeric: 'tabular-nums' }}>
-          {pad(countdown.days, 3)}
-        </div>
-        <div style={{ fontSize: '10px', color: '#666666', letterSpacing: '3px', marginBottom: '40px' }}>DAYS</div>
+      {/* Countdown */}
+      <div style={{ textAlign: 'center', marginBottom: '60px', width: '100%', maxWidth: '400px' }}>
+        <div style={{ fontSize: '72px', fontVariantNumeric: 'tabular-nums' }}>{pad(countdown.days, 3)}</div>
+        <div style={{ fontSize: '10px', color: '#666', letterSpacing: '3px', marginBottom: '30px' }}>DAYS</div>
+        <div style={{ fontSize: '48px', fontVariantNumeric: 'tabular-nums' }}>{pad(countdown.hours, 2)}:{pad(countdown.minutes, 2)}</div>
+        <div style={{ fontSize: '9px', color: '#666', letterSpacing: '3px', marginBottom: '20px' }}>HOURS : MINUTES</div>
+        
+        <div onClick={handleVirtueClick} style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: virtueMarked ? '#FFF' : 'transparent', border: '1px solid #333', cursor: 'pointer', margin: '32px auto 8px' }}></div>
+        <div style={{ fontSize: '7px', color: '#444' }}>TODAY</div>
 
-        <div style={{ fontSize: '48px', lineHeight: '1', marginBottom: '16px', fontVariantNumeric: 'tabular-nums' }}>
-          {pad(countdown.hours, 2)}:{pad(countdown.minutes, 2)}
-        </div>
-        <div style={{ fontSize: '9px', color: '#666666', letterSpacing: '3px', marginBottom: '32px' }}>HOURS : MINUTES</div>
-
-        <div style={{ fontSize: '36px', lineHeight: '1', marginBottom: '12px', fontVariantNumeric: 'tabular-nums' }}>
-          {pad(countdown.seconds, 2)}
-        </div>
-        <div style={{ fontSize: '8px', color: '#666666', letterSpacing: '3px', marginBottom: '24px' }}>SECONDS</div>
-
-        <div style={{ fontSize: '20px', lineHeight: '1', marginBottom: '8px', color: '#999999', fontVariantNumeric: 'tabular-nums' }}>
-          {pad(countdown.milliseconds, 3)}
-        </div>
-        <div style={{ fontSize: '7px', color: '#444444', letterSpacing: '2px', marginBottom: '48px' }}>MILLISECONDS</div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginTop: '32px' }}>
-          <div
-            onClick={handleVirtueClick}
-            style={{
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              backgroundColor: virtueMarked ? '#FFFFFF' : 'transparent',
-              border: `1px solid ${virtueMarked ? '#FFFFFF' : '#333333'}`,
-              cursor: 'pointer'
-            }}
-          ></div>
-          <div style={{ fontSize: '7px', color: '#444444', letterSpacing: '2px' }}>TODAY</div>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
-          <div
-            onClick={toggleCosmicView}
-            style={{ padding: '12px 24px', border: '1px solid #333333', fontSize: '8px', color: '#666666', letterSpacing: '3px', cursor: 'pointer' }}
-          >
-            {cosmicView ? 'RETURN TO PRESENT' : 'VIEW FROM ABOVE'}
-          </div>
-        </div>
-
-        <div style={{ marginTop: '16px', paddingTop: '32px', borderTop: '1px solid #1A1A1A' }}>
-          <div style={{ fontSize: '28px', lineHeight: '1', marginBottom: '10px', fontVariantNumeric: 'tabular-nums' }}>
-            {yearDepletion.toFixed(6)}%
-          </div>
-          <div style={{ fontSize: '8px', color: '#666666', letterSpacing: '3px', marginBottom: '20px' }}>YEAR {selectedYear} DEPLETED</div>
-
-          <div style={{ width: '100%', height: '2px', backgroundColor: '#1A1A1A', marginBottom: '40px' }}>
-            <div style={{ width: `${yearDepletion}%`, height: '2px', backgroundColor: '#FFFFFF' }}></div>
-          </div>
-
-          <div style={{ fontSize: '28px', lineHeight: '1', marginBottom: '10px', fontVariantNumeric: 'tabular-nums', color: '#999999' }}>
-            {lifeDepletion.toFixed(6)}%
-          </div>
-          <div style={{ fontSize: '8px', color: '#555555', letterSpacing: '3px', marginBottom: '20px' }}>LIFE CONSUMED</div>
-
-          <div style={{ width: '100%', height: '2px', backgroundColor: '#1A1A1A' }}>
-            <div style={{ width: `${lifeDepletion}%`, height: '2px', backgroundColor: '#666666' }}></div>
-          </div>
+        <div onClick={() => setCosmicView(!cosmicView)} style={{ padding: '12px 24px', border: '1px solid #333', fontSize: '8px', color: '#666', letterSpacing: '3px', cursor: 'pointer', marginTop: '30px' }}>
+          {cosmicView ? 'RETURN' : 'ABOVE'}
         </div>
       </div>
 
-      {/* Grid de 52 columnas estable */}
-      <div style={{ 
-        display: 'grid', 
-        // Usamos un tamaño fijo de 5px para evitar decimales en el renderizado
-        gridTemplateColumns: 'repeat(52, 5px)', 
-        gap: '2px',
-        justifyContent: 'center', // Centramos el grid para que el sobrante no afecte la alineación
-        marginBottom: '24px'
-      }}>
-        {lifeScaleData.weeks.map((weekIndex) => {
-          const isPassed = weekIndex < lifeScaleData.currentWeekInLife;
-          const isCurrent = weekIndex === lifeScaleData.currentWeekInLife;
-          
-          return (
-            <div key={weekIndex} style={{ 
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}>
-              <div style={{
-                width: '5px', // Coincide con el tamaño de la columna
-                height: '5px',
-                backgroundColor: isPassed ? '#FFFFFF' : '#222222',
-                border: isCurrent ? '1px solid #FFFFFF' : 'none',
-                opacity: isPassed ? 0.5 : 0.2
-              }}></div>
+      {/* Grids */}
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        {!cosmicView ? (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '3px', marginBottom: '40px' }}>
+              {dayBlocks.map(b => <div key={b} style={{ height: '12px', backgroundColor: b <= currentDayBlock ? '#FFF' : 'transparent', border: `1px solid ${b <= currentDayBlock ? '#FFF' : '#1A1A1A'}` }}></div>)}
             </div>
-          );
-        })}
+            {quarters.map((q, i) => (
+              <div key={i} style={{ marginBottom: '32px' }}>
+                <div style={{ fontSize: '8px', color: '#444', textAlign: 'center', marginBottom: '12px' }}>Q{i+1}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(13, 1fr)', gap: '8px' }}>
+                  {q.map(w => (
+                    <div key={w.weekNumber} style={{ display: 'flex', justifyContent: 'center' }}>
+                      <svg width="20" height="20">
+                        <circle cx="10" cy="10" r="8" fill={isWeekCompleted(w.endDate) ? '#FFF' : 'none'} stroke={w.weekNumber === currentWeek ? '#FFF' : '#1A1A1A'} strokeWidth="1" />
+                      </svg>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(52, 5px)', gap: '2px', justifyContent: 'center' }}>
+            {lifeScaleData.weeks.map(idx => (
+              <div key={idx} style={{ width: '5px', height: '5px', backgroundColor: idx < lifeScaleData.currentWeekInLife ? '#FFF' : '#222', opacity: idx < lifeScaleData.currentWeekInLife ? 0.5 : 0.2, border: idx === lifeScaleData.currentWeekInLife ? '1px solid #FFF' : 'none' }}></div>
+            ))}
+          </div>
+        )}
       </div>
-
-      <div style={{ fontSize: '8px', color: '#333333', letterSpacing: '2px', textAlign: 'center' }}>NEVETS AGETRO</div>
     </div>
   );
 };
