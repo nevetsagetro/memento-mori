@@ -395,54 +395,35 @@ const MementoMori = () => {
         </div>
       </div>
 
-      {/* Grid rendering */}
-      <div style={{ width: '100%', maxWidth: '400px', marginBottom: '64px' }}>
-        {!cosmicView ? (
-          <>
-            <div style={{ marginBottom: '64px' }}>
-              <div style={{ fontSize: '8px', color: '#444444', letterSpacing: '2px', marginBottom: '16px', textAlign: 'center' }}>TODAY — 144 × 10 MIN</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '3px' }}>
-                {dayBlocks.map((block) => (
-                  <div key={block} style={{ width: '12px', height: '12px', backgroundColor: block <= currentDayBlock ? '#FFFFFF' : 'transparent', border: `1px solid ${block <= currentDayBlock ? '#FFFFFF' : '#1A1A1A'}` }}></div>
-                ))}
-              </div>
+      {/* Grid de 52 columnas estable */}
+      <div style={{ 
+        display: 'grid', 
+        // Usamos un tamaño fijo de 5px para evitar decimales en el renderizado
+        gridTemplateColumns: 'repeat(52, 5px)', 
+        gap: '2px',
+        justifyContent: 'center', // Centramos el grid para que el sobrante no afecte la alineación
+        marginBottom: '24px'
+      }}>
+        {lifeScaleData.weeks.map((weekIndex) => {
+          const isPassed = weekIndex < lifeScaleData.currentWeekInLife;
+          const isCurrent = weekIndex === lifeScaleData.currentWeekInLife;
+          
+          return (
+            <div key={weekIndex} style={{ 
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              <div style={{
+                width: '5px', // Coincide con el tamaño de la columna
+                height: '5px',
+                backgroundColor: isPassed ? '#FFFFFF' : '#222222',
+                border: isCurrent ? '1px solid #FFFFFF' : 'none',
+                opacity: isPassed ? 0.5 : 0.2
+              }}></div>
             </div>
-
-            {quarters.map((quarter, qIndex) => (
-              <div key={qIndex}>
-                <div style={{ fontSize: '8px', color: '#444444', letterSpacing: '2px', marginBottom: '16px', textAlign: 'center' }}>Q{qIndex + 1}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(13, 1fr)', gap: '8px', marginBottom: '48px' }}>
-                  {quarter.map((week) => (
-                    <div key={week.weekNumber} style={{ display: 'flex', justifyContent: 'center' }}>
-                      <svg width="24" height="24">
-                        <circle cx="12" cy="12" r="10" fill={isWeekCompleted(week.endDate) ? '#FFFFFF' : 'none'} stroke={week.weekNumber === currentWeek ? '#FFFFFF' : '#1A1A1A'} strokeWidth={week.weekNumber === currentWeek ? '2' : '1'} />
-                      </svg>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </>
-        ) : (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '8px', color: '#444444', letterSpacing: '2px', marginBottom: '24px' }}>THE VIEW FROM ABOVE — ONE CENTURY</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(52, 1fr)', gap: '2px', marginBottom: '24px' }}>
-              {lifeScaleData.weeks.map((weekIndex) => {
-                const isPassed = weekIndex < lifeScaleData.currentWeekInLife;
-                const isCurrent = weekIndex === lifeScaleData.currentWeekInLife;
-                return (
-                  <div key={weekIndex} style={{ 
-                    width: '6px', 
-                    height: '6px', 
-                    backgroundColor: isPassed ? '#FFFFFF' : '#222222', 
-                    opacity: isPassed ? 0.5 : 0.2,
-                    border: isCurrent ? '1px solid #FFFFFF' : 'none'
-                  }}></div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+          );
+        })}
       </div>
 
       <div style={{ fontSize: '8px', color: '#333333', letterSpacing: '2px', textAlign: 'center' }}>NEVETS AGETRO</div>
