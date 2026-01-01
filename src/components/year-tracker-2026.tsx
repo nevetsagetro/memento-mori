@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const MementoMori = () => {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState(2026);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [birthYear, setBirthYear] = useState(1997);
+  const [birthYear, setBirthYear] = useState(1990);
   const [lifeExpectancy, setLifeExpectancy] = useState(80);
   const [virtueMarked, setVirtueMarked] = useState(false);
-  const [lastVirtueDate, setLastVirtueDate] = useState(null);
+  const [lastVirtueDate, setLastVirtueDate] = useState<string | null>(null);
   const [cosmicView, setCosmicView] = useState(false);
-  const [lifeScale, setLifeScale] = useState(80);
-  const animationFrameRef = useRef(null);
+  const [lifeScale] = useState(80); // Quitamos setLifeScale si no se usa
+  const animationFrameRef = useRef<number | null>(null);
 
   // Generate 52 weeks for any year
-  const generateWeeks = (year) => {
+  const generateWeeks = (year: number) => {
     const weeks = [];
     
     for (let week = 1; week <= 52; week++) {
@@ -74,7 +74,7 @@ const MementoMori = () => {
   // Calculate countdown to end of selected year
   const calculateCountdown = () => {
     const target = new Date(`${selectedYear}-12-31T23:59:59.999`);
-    const diff = target - currentTime;
+    const diff = target.getTime() - currentTime.getTime();
     
     if (diff <= 0) {
       return { days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 0 };
@@ -95,8 +95,8 @@ const MementoMori = () => {
   const calculateYearDepletion = () => {
     const startOfYear = new Date(`${selectedYear}-01-01T00:00:00.000`);
     const endOfYear = new Date(`${selectedYear}-12-31T23:59:59.999`);
-    const totalYearMs = endOfYear - startOfYear;
-    const elapsedMs = currentTime - startOfYear;
+    const totalYearMs = endOfYear.getTime() - startOfYear.getTime();
+    const elapsedMs = currentTime.getTime() - startOfYear.getTime();
     
     if (elapsedMs <= 0) return 0;
     if (elapsedMs >= totalYearMs) return 100;
@@ -110,8 +110,8 @@ const MementoMori = () => {
   const calculateLifeDepletion = () => {
     const birthDate = new Date(`${birthYear}-01-01T00:00:00.000`);
     const expectedDeathDate = new Date(`${birthYear + lifeExpectancy}-01-01T00:00:00.000`);
-    const totalLifeMs = expectedDeathDate - birthDate;
-    const elapsedMs = currentTime - birthDate;
+    const totalLifeMs = expectedDeathDate.getTime() - birthDate.getTime();
+    const elapsedMs = currentTime.getTime() - birthDate.getTime();
     
     if (elapsedMs <= 0) return 0;
     if (elapsedMs >= totalLifeMs) return 100;
@@ -135,7 +135,7 @@ const MementoMori = () => {
   const dayBlocks = Array.from({ length: 144 }, (_, i) => i);
 
   // Determine if a week is completed
-  const isWeekCompleted = (weekEndDate) => {
+  const isWeekCompleted = (weekEndDate: string) => {
     const endDate = new Date(weekEndDate + 'T23:59:59');
     return currentTime > endDate;
   };
@@ -149,7 +149,7 @@ const MementoMori = () => {
       return null;
     }
     
-    const diffTime = currentTime - startOfYear;
+    const diffTime = currentTime.getTime() - startOfYear.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     return Math.floor(diffDays / 7) + 1;
   };
@@ -157,7 +157,7 @@ const MementoMori = () => {
   const currentWeek = getCurrentWeekNumber();
 
   // Format number with leading zeros - tabular figures
-  const pad = (num, size) => String(num).padStart(size, '0');
+  const pad = (num: number | string, size: number) => String(num).padStart(size, '0');
 
   // Generate year options (2026-2040)
   const yearOptions = Array.from({ length: 15 }, (_, i) => 2026 + i);
@@ -168,18 +168,10 @@ const MementoMori = () => {
   // Generate life expectancy options (50-120)
   const lifeExpectancyOptions = Array.from({ length: 71 }, (_, i) => 50 + i);
 
-  // Generate century view (100 years)
-  const generateCenturyYears = () => {
-    const startYear = Math.floor(selectedYear / 100) * 100;
-    return Array.from({ length: 100 }, (_, i) => startYear + i);
-  };
-
-  const centuryYears = generateCenturyYears();
-  const currentYearInCentury = new Date().getFullYear();
-
   // Generate life-scale grid (weeks across entire lifespan)
   const generateLifeScaleWeeks = () => {
     const totalWeeks = 100 * 52; // Always show 100 years
+    const currentYearInCentury = new Date().getFullYear();
     const currentAge = currentYearInCentury - birthYear;
     const currentWeekInLife = Math.floor((currentAge * 365.25 + 
       (currentTime.getMonth() * 30.44) + 
@@ -276,9 +268,7 @@ const MementoMori = () => {
             fontWeight: 'normal',
             textAlign: 'center',
             outline: 'none',
-            appearance: 'none',
-            WebkitAppearance: 'none',
-            MozAppearance: 'none'
+            appearance: 'none'
           }}
         >
           {yearOptions.map(year => (
@@ -301,8 +291,6 @@ const MementoMori = () => {
               textAlign: 'center',
               outline: 'none',
               appearance: 'none',
-              WebkitAppearance: 'none',
-              MozAppearance: 'none',
               flex: '1'
             }}
           >
@@ -325,8 +313,6 @@ const MementoMori = () => {
               textAlign: 'center',
               outline: 'none',
               appearance: 'none',
-              WebkitAppearance: 'none',
-              MozAppearance: 'none',
               flex: '1'
             }}
           >
@@ -337,109 +323,34 @@ const MementoMori = () => {
         </div>
       </div>
 
-      {/* Year Selector */}
-
-      {/* High-Precision Countdown - Hierarchical Typography */}
+      {/* High-Precision Countdown */}
       <div style={{ 
         textAlign: 'center', 
         marginBottom: '80px',
         width: '100%',
         maxWidth: '400px'
       }}>
-        {/* Days - Largest */}
-        <div style={{ 
-          fontSize: '72px', 
-          fontFamily: "'Courier New', Courier, monospace",
-          fontWeight: 'normal',
-          letterSpacing: '0',
-          lineHeight: '1',
-          marginBottom: '24px',
-          fontVariantNumeric: 'tabular-nums'
-        }}>
+        <div style={{ fontSize: '72px', lineHeight: '1', marginBottom: '24px', fontVariantNumeric: 'tabular-nums' }}>
           {pad(countdown.days, 3)}
         </div>
-        <div style={{ 
-          fontSize: '10px', 
-          color: '#666666',
-          letterSpacing: '3px',
-          marginBottom: '40px'
-        }}>
-          DAYS
-        </div>
+        <div style={{ fontSize: '10px', color: '#666666', letterSpacing: '3px', marginBottom: '40px' }}>DAYS</div>
 
-        {/* Hours : Minutes */}
-        <div style={{ 
-          fontSize: '48px', 
-          fontFamily: "'Courier New', Courier, monospace",
-          fontWeight: 'normal',
-          letterSpacing: '0',
-          lineHeight: '1',
-          marginBottom: '16px',
-          fontVariantNumeric: 'tabular-nums'
-        }}>
+        <div style={{ fontSize: '48px', lineHeight: '1', marginBottom: '16px', fontVariantNumeric: 'tabular-nums' }}>
           {pad(countdown.hours, 2)}:{pad(countdown.minutes, 2)}
         </div>
-        <div style={{ 
-          fontSize: '9px', 
-          color: '#666666',
-          letterSpacing: '3px',
-          marginBottom: '32px'
-        }}>
-          HOURS : MINUTES
-        </div>
+        <div style={{ fontSize: '9px', color: '#666666', letterSpacing: '3px', marginBottom: '32px' }}>HOURS : MINUTES</div>
 
-        {/* Seconds */}
-        <div style={{ 
-          fontSize: '36px', 
-          fontFamily: "'Courier New', Courier, monospace",
-          fontWeight: 'normal',
-          letterSpacing: '0',
-          lineHeight: '1',
-          marginBottom: '12px',
-          fontVariantNumeric: 'tabular-nums'
-        }}>
+        <div style={{ fontSize: '36px', lineHeight: '1', marginBottom: '12px', fontVariantNumeric: 'tabular-nums' }}>
           {pad(countdown.seconds, 2)}
         </div>
-        <div style={{ 
-          fontSize: '8px', 
-          color: '#666666',
-          letterSpacing: '3px',
-          marginBottom: '24px'
-        }}>
-          SECONDS
-        </div>
+        <div style={{ fontSize: '8px', color: '#666666', letterSpacing: '3px', marginBottom: '24px' }}>SECONDS</div>
 
-        {/* Milliseconds - Smallest */}
-        <div style={{ 
-          fontSize: '20px', 
-          fontFamily: "'Courier New', Courier, monospace",
-          fontWeight: 'normal',
-          letterSpacing: '0',
-          lineHeight: '1',
-          marginBottom: '8px',
-          color: '#999999',
-          fontVariantNumeric: 'tabular-nums'
-        }}>
+        <div style={{ fontSize: '20px', lineHeight: '1', marginBottom: '8px', color: '#999999', fontVariantNumeric: 'tabular-nums' }}>
           {pad(countdown.milliseconds, 3)}
         </div>
-        <div style={{ 
-          fontSize: '7px', 
-          color: '#444444',
-          letterSpacing: '2px',
-          marginBottom: '48px'
-        }}>
-          MILLISECONDS
-        </div>
+        <div style={{ fontSize: '7px', color: '#444444', letterSpacing: '2px', marginBottom: '48px' }}>MILLISECONDS</div>
 
-        {/* Binary Virtue Record - Single Dot */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '12px',
-          marginTop: '32px',
-          marginBottom: '24px'
-        }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginTop: '32px' }}>
           <div
             onClick={handleVirtueClick}
             style={{
@@ -448,366 +359,93 @@ const MementoMori = () => {
               borderRadius: '50%',
               backgroundColor: virtueMarked ? '#FFFFFF' : 'transparent',
               border: `1px solid ${virtueMarked ? '#FFFFFF' : '#333333'}`,
-              cursor: 'pointer',
-              transition: 'none'
+              cursor: 'pointer'
             }}
           ></div>
-          <div style={{ 
-            fontSize: '7px', 
-            color: '#444444',
-            letterSpacing: '2px',
-            textAlign: 'center'
-          }}>
-            TODAY
-          </div>
+          <div style={{ fontSize: '7px', color: '#444444', letterSpacing: '2px' }}>TODAY</div>
         </div>
 
-        {/* Cosmic View Toggle Button */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginTop: '32px',
-          marginBottom: '24px'
-        }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
           <div
             onClick={toggleCosmicView}
-            style={{
-              padding: '12px 24px',
-              border: '1px solid #333333',
-              fontSize: '8px',
-              color: '#666666',
-              letterSpacing: '3px',
-              cursor: 'pointer',
-              textAlign: 'center',
-              userSelect: 'none'
-            }}
+            style={{ padding: '12px 24px', border: '1px solid #333333', fontSize: '8px', color: '#666666', letterSpacing: '3px', cursor: 'pointer' }}
           >
             {cosmicView ? 'RETURN TO PRESENT' : 'VIEW FROM ABOVE'}
           </div>
         </div>
 
-        {/* Year Depletion Percentage */}
-        <div style={{
-          marginTop: '16px',
-          paddingTop: '32px',
-          borderTop: '1px solid #1A1A1A'
-        }}>
-          <div style={{ 
-            fontSize: '28px', 
-            fontFamily: "'Courier New', Courier, monospace",
-            fontWeight: 'normal',
-            letterSpacing: '0',
-            lineHeight: '1',
-            marginBottom: '10px',
-            fontVariantNumeric: 'tabular-nums'
-          }}>
+        <div style={{ marginTop: '16px', paddingTop: '32px', borderTop: '1px solid #1A1A1A' }}>
+          <div style={{ fontSize: '28px', lineHeight: '1', marginBottom: '10px', fontVariantNumeric: 'tabular-nums' }}>
             {yearDepletion.toFixed(6)}%
           </div>
-          <div style={{ 
-            fontSize: '8px', 
-            color: '#666666',
-            letterSpacing: '3px',
-            marginBottom: '20px'
-          }}>
-            YEAR {selectedYear} DEPLETED
+          <div style={{ fontSize: '8px', color: '#666666', letterSpacing: '3px', marginBottom: '20px' }}>YEAR {selectedYear} DEPLETED</div>
+
+          <div style={{ width: '100%', height: '2px', backgroundColor: '#1A1A1A', marginBottom: '40px' }}>
+            <div style={{ width: `${yearDepletion}%`, height: '2px', backgroundColor: '#FFFFFF' }}></div>
           </div>
 
-          {/* Year Depletion Progress Bar */}
-          <div style={{
-            width: '100%',
-            height: '2px',
-            backgroundColor: '#1A1A1A',
-            position: 'relative',
-            overflow: 'hidden',
-            marginBottom: '40px'
-          }}>
-            <div style={{
-              width: `${yearDepletion}%`,
-              height: '2px',
-              backgroundColor: '#FFFFFF',
-              transition: 'none'
-            }}></div>
-          </div>
-
-          {/* Life Depletion Percentage */}
-          <div style={{ 
-            fontSize: '28px', 
-            fontFamily: "'Courier New', Courier, monospace",
-            fontWeight: 'normal',
-            letterSpacing: '0',
-            lineHeight: '1',
-            marginBottom: '10px',
-            fontVariantNumeric: 'tabular-nums',
-            color: '#999999'
-          }}>
+          <div style={{ fontSize: '28px', lineHeight: '1', marginBottom: '10px', fontVariantNumeric: 'tabular-nums', color: '#999999' }}>
             {lifeDepletion.toFixed(6)}%
           </div>
-          <div style={{ 
-            fontSize: '8px', 
-            color: '#555555',
-            letterSpacing: '3px',
-            marginBottom: '20px'
-          }}>
-            LIFE CONSUMED ({birthYear}–{birthYear + lifeExpectancy})
-          </div>
+          <div style={{ fontSize: '8px', color: '#555555', letterSpacing: '3px', marginBottom: '20px' }}>LIFE CONSUMED</div>
 
-          {/* Life Depletion Progress Bar */}
-          <div style={{
-            width: '100%',
-            height: '2px',
-            backgroundColor: '#1A1A1A',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              width: `${lifeDepletion}%`,
-              height: '2px',
-              backgroundColor: '#666666',
-              transition: 'none'
-            }}></div>
+          <div style={{ width: '100%', height: '2px', backgroundColor: '#1A1A1A' }}>
+            <div style={{ width: `${lifeDepletion}%`, height: '2px', backgroundColor: '#666666' }}></div>
           </div>
         </div>
       </div>
 
-      {/* Quartered Grid - 4 Seasons */}
-      <div style={{ 
-        width: '100%',
-        maxWidth: '400px',
-        marginBottom: '64px'
-      }}>
-
+      {/* Grid rendering */}
+      <div style={{ width: '100%', maxWidth: '400px', marginBottom: '64px' }}>
         {!cosmicView ? (
           <>
-            {/* Daily Micro-Grid - 144 blocks */}
-            <div style={{
-              marginBottom: '64px'
-            }}>
-              <div style={{
-                fontSize: '8px',
-                color: '#444444',
-                letterSpacing: '2px',
-                marginBottom: '16px',
-                textAlign: 'center'
-              }}>
-                TODAY — 144 × 10 MINUTES
-              </div>
-              
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(24, 1fr)',
-                gap: '3px',
-                marginBottom: '16px'
-              }}>
-                {dayBlocks.map((block) => {
-                  const isPassed = block <= currentDayBlock;
-                  
-                  return (
-                    <div key={block} style={{ 
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center'
-                    }}>
-                      <div style={{
-                        width: '12px',
-                        height: '12px',
-                        backgroundColor: isPassed ? '#FFFFFF' : 'transparent',
-                        border: `1px solid ${isPassed ? '#FFFFFF' : '#1A1A1A'}`
-                      }}></div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div style={{
-                fontSize: '7px',
-                color: '#333333',
-                letterSpacing: '2px',
-                textAlign: 'center'
-              }}>
-                BLOCK {currentDayBlock + 1} OF 144
+            <div style={{ marginBottom: '64px' }}>
+              <div style={{ fontSize: '8px', color: '#444444', letterSpacing: '2px', marginBottom: '16px', textAlign: 'center' }}>TODAY — 144 × 10 MIN</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '3px' }}>
+                {dayBlocks.map((block) => (
+                  <div key={block} style={{ width: '12px', height: '12px', backgroundColor: block <= currentDayBlock ? '#FFFFFF' : 'transparent', border: `1px solid ${block <= currentDayBlock ? '#FFFFFF' : '#1A1A1A'}` }}></div>
+                ))}
               </div>
             </div>
 
             {quarters.map((quarter, qIndex) => (
               <div key={qIndex}>
-                {/* Quarter Label */}
-                <div style={{
-                  fontSize: '8px',
-                  color: '#444444',
-                  letterSpacing: '2px',
-                  marginBottom: '16px',
-                  textAlign: 'center'
-                }}>
-                  Q{qIndex + 1}
-                </div>
-                
-                {/* Quarter Grid */}
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(13, 1fr)',
-                  gap: '8px',
-                  marginBottom: qIndex < 3 ? '48px' : '0'
-                }}>
-                  {quarter.map((week) => {
-                    const isCompleted = isWeekCompleted(week.endDate);
-                    const isCurrent = week.weekNumber === currentWeek;
-                    
-                    return (
-                      <div key={week.weekNumber} style={{ 
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                      }}>
-                        <svg width="24" height="24">
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            fill={isCompleted ? '#FFFFFF' : 'none'}
-                            stroke={isCurrent ? '#FFFFFF' : '#1A1A1A'}
-                            strokeWidth={isCurrent ? '2' : '1'}
-                          />
-                        </svg>
-                      </div>
-                    );
-                  })}
+                <div style={{ fontSize: '8px', color: '#444444', letterSpacing: '2px', marginBottom: '16px', textAlign: 'center' }}>Q{qIndex + 1}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(13, 1fr)', gap: '8px', marginBottom: '48px' }}>
+                  {quarter.map((week) => (
+                    <div key={week.weekNumber} style={{ display: 'flex', justifyContent: 'center' }}>
+                      <svg width="24" height="24">
+                        <circle cx="12" cy="12" r="10" fill={isWeekCompleted(week.endDate) ? '#FFFFFF' : 'none'} stroke={week.weekNumber === currentWeek ? '#FFFFFF' : '#1A1A1A'} strokeWidth={week.weekNumber === currentWeek ? '2' : '1'} />
+                      </svg>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
           </>
         ) : (
-          <>
-            {/* Cosmic View - Century with Life Milestones */}
-            <div style={{
-              marginBottom: '32px'
-            }}>
-              <div style={{
-                fontSize: '8px',
-                color: '#444444',
-                letterSpacing: '2px',
-                marginBottom: '8px',
-                textAlign: 'center'
-              }}>
-                THE VIEW FROM ABOVE — ONE CENTURY
-              </div>
-              <div style={{
-                fontSize: '7px',
-                color: '#333333',
-                letterSpacing: '2px',
-                marginBottom: '24px',
-                textAlign: 'center'
-              }}>
-                5,200 WEEKS
-              </div>
-
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(52, 1fr)',
-                gap: '2px',
-                marginBottom: '24px'
-              }}>
-                {lifeScaleData.weeks.map((weekIndex) => {
-                  const isPassed = weekIndex < lifeScaleData.currentWeekInLife;
-                  const isCurrent = weekIndex === lifeScaleData.currentWeekInLife;
-                  const isWithin30Years = weekIndex < (30 * 52);
-                  const isWithin50Years = weekIndex < (50 * 52);
-                  const isWithinLifeExpectancy = weekIndex < (lifeExpectancy * 52);
-                  
-                  // Determine fill color based on milestone zones
-                  let fillColor = 'transparent';
-                  let opacity = 0.03;
-                  
-                  if (isPassed) {
-                    fillColor = '#FFFFFF';
-                    opacity = 0.5; // Reduced from 1 to 0.5 for eye comfort
-                  } else if (isWithin30Years) {
-                    fillColor = '#444444';
-                    opacity = 0.4;
-                  } else if (isWithin50Years) {
-                    fillColor = '#333333';
-                    opacity = 0.3;
-                  } else if (isWithinLifeExpectancy) {
-                    fillColor = '#222222';
-                    opacity = 0.2;
-                  }
-                  
-                  return (
-                    <div key={weekIndex} style={{ 
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center'
-                    }}>
-                      <div style={{
-                        width: '6px',
-                        height: '6px',
-                        backgroundColor: fillColor,
-                        border: isCurrent ? '1px solid #FFFFFF' : 'none',
-                        opacity: opacity
-                      }}></div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div style={{
-                fontSize: '7px',
-                color: '#444444',
-                letterSpacing: '2px',
-                textAlign: 'center',
-                marginBottom: '24px'
-              }}>
-                WEEK {lifeScaleData.currentWeekInLife.toLocaleString()} OF 5,200
-              </div>
-
-              {/* Legend */}
-              <div style={{
-                fontSize: '6px',
-                color: '#333333',
-                letterSpacing: '2px',
-                textAlign: 'center',
-                lineHeight: '1.8',
-                marginBottom: '16px'
-              }}>
-                30Y ZONE • 50Y ZONE • {lifeExpectancy}Y ZONE
-              </div>
-
-              <div style={{
-                fontSize: '7px',
-                color: '#222222',
-                letterSpacing: '1px',
-                textAlign: 'center',
-                lineHeight: '1.6',
-                maxWidth: '300px',
-                margin: '0 auto'
-              }}>
-                "Dwell on the beauty of life. Watch the stars, and see yourself running with them."
-                <br/>— Marcus Aurelius
-              </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '8px', color: '#444444', letterSpacing: '2px', marginBottom: '24px' }}>THE VIEW FROM ABOVE — ONE CENTURY</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(52, 1fr)', gap: '2px', marginBottom: '24px' }}>
+              {lifeScaleData.weeks.map((weekIndex) => {
+                const isPassed = weekIndex < lifeScaleData.currentWeekInLife;
+                const isCurrent = weekIndex === lifeScaleData.currentWeekInLife;
+                return (
+                  <div key={weekIndex} style={{ 
+                    width: '6px', 
+                    height: '6px', 
+                    backgroundColor: isPassed ? '#FFFFFF' : '#222222', 
+                    opacity: isPassed ? 0.5 : 0.2,
+                    border: isCurrent ? '1px solid #FFFFFF' : 'none'
+                  }}></div>
+                );
+              })}
             </div>
-          </>
+          </div>
         )}
       </div>
 
-      {/* Minimalist Footer */}
-      <div style={{
-        fontSize: '8px',
-        color: '#333333',
-        letterSpacing: '2px',
-        textAlign: 'center'
-      }}>
-        NEVETS AGETRO
-      </div>
-      
-      <div style={{
-        fontSize: '7px',
-        color: '#1A1A1A',
-        letterSpacing: '2px',
-        textAlign: 'center',
-        marginTop: '8px'
-      }}>
-        MEMENTO MORI
-      </div>
-
+      <div style={{ fontSize: '8px', color: '#333333', letterSpacing: '2px', textAlign: 'center' }}>NEVETS AGETRO</div>
     </div>
   );
 };
