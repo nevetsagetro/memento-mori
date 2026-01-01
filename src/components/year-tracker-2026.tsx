@@ -430,7 +430,7 @@ const MementoMori = () => {
             <div style={{ 
               display: 'grid', 
               gridTemplateColumns: 'repeat(52, 1fr)', // 52 columnas iguales
-              gap: '1px', // Gap pequeño y constante
+              gap: '2px', // Gap pequeño y constante
               marginBottom: '24px', 
               width: '100%'  // Ocupa todo el ancho del contenedor padre
               }}>
